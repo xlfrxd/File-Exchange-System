@@ -1,6 +1,7 @@
 package Client;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -49,40 +50,63 @@ public class Client {
                             errorString = "Error: Connection to the Server has failed! Please check IP Address and Port Number.";
                             break;
                         }
-                        
+
                         out.println(userInput); // Send valid command to server
+                        System.out.println(in.readLine()); // Receive response from server
+
                     } else if ("/leave".equals(command[0])) { // Leave server
                         if (command.length != 1) { // Command must have only 1 argument
                             errorString = "Error: Command parameters do not match or is not allowed.";
                             break;
                         }
 
-                        out.println(userInput); // Send valid command to server
+                        try {
+                            out.println(userInput); // Send valid command to server
+                            System.out.println(in.readLine()); // Receive response from server
 
-                        socket.close();
+                        } catch (Exception e) {
+                            System.out.println("Error: Disconnection failed. Please connect to the server first.");
+                            break;
+                        } finally {
+                            socket.close();
+                        }
                     } else if ("/?".equals(command[0])) { // View command list
-                        System.out.println("Viewed commands");
+                        if (command.length == 1) {
+                            System.out.println("Available commands:");
+
+                            System.out.println(
+                                    "          /join <server_ip_add> <port>: Connect to the server application.");
+                            System.out.println("          /leave: Disconnect from the server application.");
+                            System.out.println("          /register <handle>: Register a unique handle or alias.");
+                            System.out.println("          /store <filename>: Send a file to the server.");
+                            System.out.println("          /dir: Request the directory file list from the server.");
+                            System.out.println("          /get <filename>: Fetch a file from the server.");
+                        } else {
+                            System.out.println("Error: Command parameters do not match or are not allowed.");
+                            break;
+                        }
                     } else { // Unknown or wrong syntax error
                         errorString = "Error: Command not found.";
                         break;
                     }
 
-                    // Print server messages/responses
-                    if (in != null)
-                        System.out.println(in.readLine());
                 } while ((userInput != null));
 
-                // Print errors 
+                // Print errors
                 if (!(errorString.isEmpty())) {
                     System.out.println(errorString);
                     errorString = "";
                 }
 
-                if (in != null && out != null && socket != null) {
-                    in.close();
-                    out.close();
-                    scan.close();
-                    socket.close();
+                try { // Close resources
+                    if (in != null)
+                        in.close();
+                    if (out != null)
+                        out.close();
+                    if (socket != null)
+                        socket.close();
+                } catch (IOException e) {
+                    System.out.println("Error occurred while closing resources");
                 }
             } catch (Exception e) {
                 e.printStackTrace();

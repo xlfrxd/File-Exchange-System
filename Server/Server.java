@@ -28,7 +28,7 @@ public class Server {
 
         String inputLine;
 
-        out.println("Server is now online!");
+        out.println("Connection to the File Exchange Server is successful!");
 
         while ((inputLine = in.readLine()) != null) {
             if ("/join".equals(inputLine)) {
@@ -38,11 +38,8 @@ public class Server {
             } else if ("/leave".equals(inputLine)) {
                 // Client wants to leave
                 out.println("You are disconnected. Goodbye!");
-                clientSocket.close(); // Close client's socket
+                //clientSocket.close(); // Close client's socket
                 break;
-            } else {
-                // Handle other messages
-                out.println("Server received: " + inputLine);
             }
         }
 
