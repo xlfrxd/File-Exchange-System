@@ -1,8 +1,11 @@
 package Server;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -38,7 +41,10 @@ public class Server {
         System.out.println(inputLine);
         while ((inputLine = in.readLine()) != null) {
             String[] request = inputLine.split("\\s+");
+
+            // Client requests
             System.out.println(inputLine);
+
             if ("/join".equals(request[0])) {
                 // Client joined
                 out.println("Connection to the File Exchange Server is successful!");
@@ -57,33 +63,76 @@ public class Server {
                 }
             } else if ("/dir".equals(request[0])) {
                 // Client wants to view directory contents
-                StringBuilder fileListString = new StringBuilder("Server Directory,"); //TODO: issue with \n
+                StringBuilder fileListString = new StringBuilder("Server Directory,"); // TODO: issue with \n
 
                 for (int i = 0; i < listOfFiles.length; i++) {
                     if (listOfFiles[i].isFile()) {
-                        fileListString.append(listOfFiles[i].getName()).append(","); //TODO: issue with \n
-                    } 
-                    else if (listOfFiles[i].isDirectory()) { 
+                        fileListString.append(listOfFiles[i].getName()).append(","); // TODO: issue with \n
+                    } else if (listOfFiles[i].isDirectory()) {
                         fileListString.append("Directory ").append(listOfFiles[i].getName()).append("\n");
                     }
                 }
 
-                System.out.println(fileListString);
-                
-                
-               
-                out.println(fileListString.toString());  // Output filenames of /Server folder
-
+                out.println(fileListString.toString()); // Output filenames of /Server folder
 
             } else if ("/store".equals(request[0])) {
-                // Client wants to store files
-                
+                // Client wants to upload files
 
+                // Receive file name from client
+                String fileName = request[1];
+
+                // Create a new file with the given fileName
+                File receivedFile = new File("./dir/" + fileName);
+                InputStream is = clientSocket.getInputStream();
+                FileOutputStream fos = new FileOutputStream(receivedFile);
+                BufferedOutputStream bos = new BufferedOutputStream(fos);
+
+                // Receive file contents from the client
+                byte[] buffer = new byte[1024];
+                int read, totalRead = 0;
+
+                while ((read = is.read(buffer)) > 0) {
+                    bos.write(buffer, 0, read);
+                    bos.flush();
+
+                    // Check for the end-of-file marker
+                    if (new String(buffer, 0, totalRead).equals("END_OF_FILE")) {
+                        break;
+                    }
+                }
+
+                // Close streams
+                bos.close();
+                fos.close();
+
+                System.out.println("eof?");
+
+                // Optional: Receive and print an "EOF" marker from the client
+                // String eofMarker = in.readLine();
+                // System.out.println("Received: EOF");
+                out.println("User1<2023-11-06 16:48:05>: Uploaded " + fileName); // TODO: Fill up missing args
 
             } else if ("/fetch".equals(request[0])) {
                 // Client wants to fetch files//byte buffer and shit
 
+                for (int i = 0; i < listOfFiles.length; i++) {
+
+                    // Search for file by name
+                    if (listOfFiles[i].getName().equals(request[1])) {
+
+                        out.println("Found!");
+
+                    } else {
+
+                        out.println("Error: File not found."); // Unsuccessful sending of a file that does not exist in
+                                                               // dir
+
+                    }
+                }
             }
+
+            // out.println("Error: File not found in the server."); // Unsuccessful fetching
+            // of a file that does not exist in dir.
         }
 
         // in.close();

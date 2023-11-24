@@ -1,7 +1,16 @@
 package Client;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
@@ -19,6 +28,9 @@ public class Client {
 
         Boolean isConnected = false; // for register, store, fetch, dir
         Boolean isRegistered = false; // for store, fetch, dir
+
+        File folder = new File("./dir");
+        File[] listOfFiles = folder.listFiles();
 
         Scanner scan = new Scanner(System.in);
         try {
@@ -78,14 +90,22 @@ public class Client {
                         errorString = "Error: Command parameters do not match or is not allowed.";
                         continue;
                     }
- 
-                    if(!isConnected){ // Client is not connected to the server
-                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO: misleading comment
+
+                    if (!isConnected) { // Client is not connected to the server
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO:
+                                                                                                          // misleading
+                                                                                                          // comment
                         continue;
                     }
 
-                    if(isRegistered) { // Client is already registered
-                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO: misleading comment -> can i client register twice?
+                    if (isRegistered) { // Client is already registered
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO:
+                                                                                                          // misleading
+                                                                                                          // comment ->
+                                                                                                          // can i
+                                                                                                          // client
+                                                                                                          // register
+                                                                                                          // twice?
                         continue;
                     }
 
@@ -106,25 +126,106 @@ public class Client {
                         continue;
                     }
 
-                    if(!isConnected || !isRegistered){
-                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO: misleading comment, must be connected to server and 
-                                                                                                          // registered to view directory files
+                    if (!isConnected || !isRegistered) {
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO:
+                                                                                                          // misleading
+                                                                                                          // comment,
+                                                                                                          // must be
+                                                                                                          // connected
+                                                                                                          // to server
+                                                                                                          // and
+                                                                                                          // registered
+                                                                                                          // to view
+                                                                                                          // directory
+                                                                                                          // files
                         continue;
                     }
 
                     try {
                         out.println(userInput); // Send dir command to server
-                        String[] dirString = in.readLine().split(","); // Receive response from server then split
+                        String[] dirString = in.readLine().split(","); // Receive response from server then split (file
+                                                                       // names are delimited by ',')
 
-                        for(int i = 0; i < dirString.length; i++) {
-                            System.out.println(dirString[i]);
-                            if(i==0) System.out.print("\n");
+                        for (int i = 0; i < dirString.length; i++) {
+                            System.out.println(dirString[i]); // Print file names
+                            if (i == 0)
+                                System.out.print("\n");
                         }
 
                     } catch (Exception e) {
-                        System.out.println("Error: Registration failed. Handle or alias already exists. /c"); // TODO: i dont know what error i should put here what if none
+                        System.out.println("Error: Registration failed. Handle or alias already exists. /c"); // TODO: i
+                                                                                                              // dont
+                                                                                                              // know
+                                                                                                              // what
+                                                                                                              // error i
+                                                                                                              // should
+                                                                                                              // put
+                                                                                                              // here
+                                                                                                              // what if
+                                                                                                              // none
                         continue;
                     }
+
+                } else if ("/store".equals(command[0])) { // Send file to server
+
+                    if (command.length != 2) { // Command must have only 2 arguments
+                        errorString = "Error: Command parameters do not match or is not allowed.";
+                        continue;
+                    }
+
+                    Boolean fileFound = false;
+
+                    for (int i = 0; i < listOfFiles.length; i++) {
+
+                        // Search for file by name in client dir
+                        if (listOfFiles[i].getName().equals(command[1])) {
+
+                            System.out.println("Found!"); // debug
+
+                            fileFound = true; // Set fileFound state
+                            break; // Break out of loop after finding file
+                        }
+                    }
+
+                    if (!fileFound) { // Unsuccessful sending of a file that does not exist in dir
+                        System.out.println("Error: File not found.");
+                        continue;
+
+                    }
+
+                    out.println(userInput); // 1: Send "/store" command to server
+
+                    File sendFile = new File("./dir/" + command[1]);
+
+                    // Open output stream to write to the server
+                    OutputStream os = socket.getOutputStream();
+
+                    // Open input stream to read the file
+                    FileInputStream fis = new FileInputStream(sendFile);
+                    BufferedInputStream bis = new BufferedInputStream(fis);
+
+                    // Send contents to the server
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = bis.read(buffer)) != -1) {
+                        os.write(buffer, 0, bytesRead);
+                    }
+
+                    // Send a specific marker to indicate the end of the file
+                    os.write("END_OF_FILE".getBytes());
+
+                    // Flush output stream (no autoflush)
+                    os.flush();
+
+                    // Close streams
+                    bis.close();
+                    fis.close();
+
+                    System.out.println("eof?");
+
+                    // PrintWriter outToServer = new PrintWriter(socket.getOutputStream(), true);
+                    // outToServer.print("EOF\n"); // Include newline character
+                    System.out.println(in.readLine()); // Receive server response
 
                 } else if ("/?".equals(command[0])) { // View command list
                     if (command.length == 1) {
@@ -144,7 +245,6 @@ public class Client {
                     errorString = "Error: Command not found.";
                 }
             } while (true);
-
 
         } catch (Exception e) {
             e.printStackTrace();
