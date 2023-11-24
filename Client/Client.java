@@ -105,8 +105,8 @@ public class Client {
                         errorString = "Error: Command parameters do not match or is not allowed.";
                         continue;
                     }
-
-                    if(!isConnected && !isRegistered){
+                    
+                    if(!isConnected || !isRegistered){
                         errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO: misleading comment, must be connected to server and 
                                                                                                           // registered to view directory files
                         continue;
