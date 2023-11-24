@@ -57,16 +57,18 @@ public class Server {
                 }
             } else if ("/dir".equals(request[0])) {
                 // Client wants to view directory contents
-                StringBuilder fileListString = new StringBuilder("Server Directory\n"); //TODO: issue with \n
+                StringBuilder fileListString = new StringBuilder("Server Directory,"); //TODO: issue with \n
 
                 for (int i = 0; i < listOfFiles.length; i++) {
                     if (listOfFiles[i].isFile()) {
-                        fileListString.append(listOfFiles[i].getName()).append("\n"); //TODO: issue with \n
+                        fileListString.append(listOfFiles[i].getName()).append(","); //TODO: issue with \n
                     } 
-                    /*else if (listOfFiles[i].isDirectory()) { 
+                    else if (listOfFiles[i].isDirectory()) { 
                         fileListString.append("Directory ").append(listOfFiles[i].getName()).append("\n");
-                    }*/
+                    }
                 }
+
+                System.out.println(fileListString);
                 
                 
                

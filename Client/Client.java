@@ -105,7 +105,7 @@ public class Client {
                         errorString = "Error: Command parameters do not match or is not allowed.";
                         continue;
                     }
-                    
+
                     if(!isConnected || !isRegistered){
                         errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO: misleading comment, must be connected to server and 
                                                                                                           // registered to view directory files
@@ -114,7 +114,12 @@ public class Client {
 
                     try {
                         out.println(userInput); // Send dir command to server
-                        System.out.println(in.readLine()); // Receive response from server
+                        String[] dirString = in.readLine().split(","); // Receive response from server then split
+
+                        for(int i = 0; i < dirString.length; i++) {
+                            System.out.println(dirString[i]);
+                            if(i==0) System.out.print("\n");
+                        }
 
                     } catch (Exception e) {
                         System.out.println("Error: Registration failed. Handle or alias already exists. /c"); // TODO: i dont know what error i should put here what if none
