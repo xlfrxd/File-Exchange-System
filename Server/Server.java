@@ -28,6 +28,9 @@ public class Server {
     }
 
     private static void handleClient(Socket clientSocket) throws IOException {
+        File folder = new File("./dir");
+        File[] listOfFiles = folder.listFiles();
+
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
@@ -54,23 +57,29 @@ public class Server {
                 }
             } else if ("/dir".equals(request[0])) {
                 // Client wants to view directory contents
-
-                File folder = new File("./dir");
-                File[] listOfFiles = folder.listFiles();
-
-                StringBuilder fileListString = new StringBuilder("Server Directory\n");
+                StringBuilder fileListString = new StringBuilder("Server Directory\n"); //TODO: issue with \n
 
                 for (int i = 0; i < listOfFiles.length; i++) {
                     if (listOfFiles[i].isFile()) {
-                        fileListString.append(listOfFiles[i].getName()).append("\n");
-                    } else if (listOfFiles[i].isDirectory()) {
+                        fileListString.append(listOfFiles[i].getName()).append("\n"); //TODO: issue with \n
+                    } 
+                    /*else if (listOfFiles[i].isDirectory()) { 
                         fileListString.append("Directory ").append(listOfFiles[i].getName()).append("\n");
-                    }
+                    }*/
                 }
                 
-                // TODO: output filenames of /Server folder
-                out.println(fileListString.toString());
+                
+               
+                out.println(fileListString.toString());  // Output filenames of /Server folder
 
+
+            } else if ("/store".equals(request[0])) {
+                // Client wants to store files
+                
+
+
+            } else if ("/fetch".equals(request[0])) {
+                // Client wants to fetch files//byte buffer and shit
 
             }
         }
