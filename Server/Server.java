@@ -14,37 +14,36 @@ public class Server {
         int port = 12345;
         ServerSocket serverSocket = new ServerSocket(port, 50, serverAddress);
 
-        while (true) {
+        while (!serverSocket.isClosed()) {
             Socket clientSocket = serverSocket.accept();
             handleClient(clientSocket);
         }
 
-        //serverSocket.close();
+        serverSocket.close();
     }
 
     private static void handleClient(Socket clientSocket) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-        String inputLine;
-
-        out.println("Connection to the File Exchange Server is successful!");
-
+        String inputLine = "";
+        System.out.println(inputLine);
         while ((inputLine = in.readLine()) != null) {
-            if ("/join".equals(inputLine)) {
+            String[] request = inputLine.split("\\s+");
+            System.out.println(inputLine);
+            if ("/join".equals(request[0])) {
                 // Client joined
-                out.println("Client [" + clientSocket.getInetAddress() + "]");
-                break;
-            } else if ("/leave".equals(inputLine)) {
+                out.println("Connection to the File Exchange Server is successful!");
+            } else if ("/leave".equals(request[0])) {
                 // Client wants to leave
                 out.println("You are disconnected. Goodbye!");
-                //clientSocket.close(); // Close client's socket
+                clientSocket.close(); // Close client's socket
                 break;
-            }
+            } 
         }
 
-        in.close();
-        out.close();
-        clientSocket.close();
+        //in.close();
+        //out.close();
+        //clientSocket.close();
     }
 }

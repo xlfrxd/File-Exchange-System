@@ -9,25 +9,23 @@ import java.util.Scanner;
 
 public class Client {
 
-    public void sendCommandToServer(String command) {
+    private static Socket socket;
+    private static BufferedReader in;
+    private static PrintWriter out;
+    private static String username = "User";
 
-    }
-
+    
+        
+    
     public static void main(String[] args) {
-
+        String userInput = "";
+        
+        String errorString = "";
+        
+        
         while (true) {
             try {
-                Socket socket = null;
-
                 Scanner scan = new Scanner(System.in);
-                BufferedReader in = null;
-                PrintWriter out = null;
-
-                String userInput = "";
-                String errorString = "";
-
-                String username = "User";
-
                 do {
 
                     System.out.print(username + ": ");
@@ -63,14 +61,13 @@ public class Client {
                         try {
                             out.println(userInput); // Send valid command to server
                             System.out.println(in.readLine()); // Receive response from server
-
+                            
+                            socket.close(); // Close connection
                         } catch (Exception e) {
                             System.out.println("Error: Disconnection failed. Please connect to the server first.");
                             break;
-                        } finally {
-                            socket.close();
-                        }
-                    } else if ("/?".equals(command[0])) { // View command list
+                        } 
+                    }  else if ("/?".equals(command[0])) { // View command list
                         if (command.length == 1) {
                             System.out.println("Available commands:");
 
@@ -98,16 +95,7 @@ public class Client {
                     errorString = "";
                 }
 
-                try { // Close resources
-                    if (in != null)
-                        in.close();
-                    if (out != null)
-                        out.close();
-                    if (socket != null)
-                        socket.close();
-                } catch (IOException e) {
-                    System.out.println("Error occurred while closing resources");
-                }
+                
             } catch (Exception e) {
                 e.printStackTrace();
             }
