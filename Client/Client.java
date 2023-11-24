@@ -26,6 +26,8 @@ public class Client {
                 String userInput = "";
                 String errorString = "";
 
+                Boolean connectedState = false;
+                Boolean registeredState = false;
                 String username = "User";
 
                 do {
@@ -36,40 +38,99 @@ public class Client {
 
                     String[] command = userInput.split("\\s+");
                     if ("/join".equals(command[0])) { // Join server via ip and port
-
                         if (command.length != 3) { // Command must have ip address and port as arguments
                             errorString = "Error: Command parameters do not match or is not allowed.";
                             break;
                         }
 
-                        try { // Connect to server (valid: 127.0.0.1, 12345)
+                        try {
                             socket = new Socket(command[1], Integer.valueOf(command[2]));
                             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                             out = new PrintWriter(socket.getOutputStream(), true);
-                        } catch (Exception e) { // Incorrect IP and/or port number error
-                            errorString = "Error: Connection to the Server has failed! Please check IP Address and Port Number.";
-                            break;
+
+                            out.println(userInput); // Send valid command to server
+                            System.out.println(in.readLine()); // Receive response from server
+                            connectedState = true;
+
+                            
+                            // Note: Do not close PrintWriter and BufferedReader here
+                        } catch (Exception e) {
+                            // ...
                         }
 
-                        out.println(userInput); // Send valid command to server
-                        System.out.println(in.readLine()); // Receive response from server
-
+                        System.out.println(socket.isConnected());
                     } else if ("/leave".equals(command[0])) { // Leave server
+                        System.out.println(socket.isConnected());
                         if (command.length != 1) { // Command must have only 1 argument
                             errorString = "Error: Command parameters do not match or is not allowed.";
                             break;
                         }
-
+                        
                         try {
-                            out.println(userInput); // Send valid command to server
-                            System.out.println(in.readLine()); // Receive response from server
 
+                            out.println(userInput); // Send valid command to server
+                            
+                            String response = in.readLine(); // Receive response from server
+                            System.out.println(response);
+
+                            connectedState = false;
                         } catch (Exception e) {
-                            System.out.println("Error: Disconnection failed. Please connect to the server first.");
+                            errorString = "Error: Disconnection failed. Please connect to the server first.";
+                            e.printStackTrace();
                             break;
                         } finally {
-                            socket.close();
+                            try {
+                                // Close resources after receiving the server's response
+                                if (socket != null)
+                                    socket.close();
+                            } catch (IOException e) {
+                                System.out.println("Error occurred while closing resources");
+                            }
                         }
+                    } else if (("/register".equals(command[0]) || "/store".equals(command[0])
+                            || "/dir".equals(command[0]) || "/get".equals(command[0]))) {
+                        if (!connectedState) { // Error for handling client must first be connected to a server
+                            errorString = "Error: Disconnection failed. Please connect to the server first"; // TODO:
+                                                                                                             // Should I
+                                                                                                             // reword
+                                                                                                             // this
+                                                                                                             // error?
+                                                                                                             // "Disconnection
+                                                                                                             // failed"
+                                                                                                             // seems
+                                                                                                             // wrong
+                            break;
+                        }
+
+                        if ("/register".equals(command[0])) { // Register client
+                            if (command.length != 2) {
+                                errorString = "Error: Command parameters do not match or is not allowed.";
+                                break;
+                            }
+                            try {
+
+                                out.println(command); // Send valid command to server
+                                String res = in.readLine(); // Receive response from server
+
+                                System.out.println(res);
+
+                                String validString = "Welcome " + command[1] + "!";
+
+                                if (validString.equals(res)) {
+                                    registeredState = true;
+                                } else {
+                                    errorString = "Error: Registration failed. Handle or alias already exists.";
+                                    break;
+                                }
+                                in.close();
+                                out.close();
+                            } catch (Exception e) {
+                                System.out.println("Error with handling registration.");
+                                e.printStackTrace();
+                                break;
+                            }
+                        }
+
                     } else if ("/?".equals(command[0])) { // View command list
                         if (command.length == 1) {
                             System.out.println("Available commands:");
@@ -96,17 +157,6 @@ public class Client {
                 if (!(errorString.isEmpty())) {
                     System.out.println(errorString);
                     errorString = "";
-                }
-
-                try { // Close resources
-                    if (in != null)
-                        in.close();
-                    if (out != null)
-                        out.close();
-                    if (socket != null)
-                        socket.close();
-                } catch (IOException e) {
-                    System.out.println("Error occurred while closing resources");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
