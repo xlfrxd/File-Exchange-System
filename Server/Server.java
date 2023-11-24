@@ -51,6 +51,12 @@ public class Server {
                     out.println("Welcome " + request[1] + "!");
                     registeredUsernames.add(request[1]);
                 }
+            } else if ("/dir".equals(request[0])) {
+                // Client wants to view directory contents
+                
+                //TODO: output filenames of /Server folder
+                out.println("Error: Registration failed. Handle or alias already exists."); 
+                
             } 
         }
 

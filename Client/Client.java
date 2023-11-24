@@ -78,8 +78,35 @@ public class Client {
                         errorString = "Error: Command parameters do not match or is not allowed.";
                         continue;
                     }
+ 
+                    if(!isConnected){ // Client is not connected to the server
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; //TODO: misleading comment
+                        continue;
+                    }
 
-                    if(!isConnected){
+                    if(isRegistered) { // Client is already registered
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; //TODO: misleading comment -> can i client register twice?
+                        continue;
+                    }
+
+                    try {
+                        out.println(userInput); // Send register command to server
+                        System.out.println(in.readLine()); // Receive response from server
+
+                        isRegistered = true;
+                    } catch (Exception e) {
+                        System.out.println("Error: Registration failed. Handle or alias already exists. /c");
+                        continue;
+                    }
+
+                } else if ("/dir".equals(command[0])) { // Register client to server
+
+                    if (command.length != 1) { // Command must have only 2 arguments
+                        errorString = "Error: Command parameters do not match or is not allowed.";
+                        continue;
+                    }
+
+                    if(!isConnected && !isRegistered){
                         errorString = "Error: Disconnection failed. Please connect to the server first."; //TODO: misleading comment
                         continue;
                     }
