@@ -80,12 +80,12 @@ public class Client {
                     }
  
                     if(!isConnected){ // Client is not connected to the server
-                        errorString = "Error: Disconnection failed. Please connect to the server first."; //TODO: misleading comment
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO: misleading comment
                         continue;
                     }
 
                     if(isRegistered) { // Client is already registered
-                        errorString = "Error: Disconnection failed. Please connect to the server first."; //TODO: misleading comment -> can i client register twice?
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO: misleading comment -> can i client register twice?
                         continue;
                     }
 
@@ -99,7 +99,7 @@ public class Client {
                         continue;
                     }
 
-                } else if ("/dir".equals(command[0])) { // Register client to server
+                } else if ("/dir".equals(command[0])) { // View server directory
 
                     if (command.length != 1) { // Command must have only 2 arguments
                         errorString = "Error: Command parameters do not match or is not allowed.";
@@ -107,17 +107,17 @@ public class Client {
                     }
 
                     if(!isConnected && !isRegistered){
-                        errorString = "Error: Disconnection failed. Please connect to the server first."; //TODO: misleading comment
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO: misleading comment, must be connected to server and 
+                                                                                                          // registered to view directory files
                         continue;
                     }
 
                     try {
-                        out.println(userInput); // Send register command to server
+                        out.println(userInput); // Send dir command to server
                         System.out.println(in.readLine()); // Receive response from server
 
-                        isRegistered = true;
                     } catch (Exception e) {
-                        System.out.println("Error: Registration failed. Handle or alias already exists. /c");
+                        System.out.println("Error: Registration failed. Handle or alias already exists. /c"); // TODO: i dont know what error i should put here what if none
                         continue;
                     }
 

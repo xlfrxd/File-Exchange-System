@@ -1,6 +1,7 @@
 package Server;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -45,7 +46,7 @@ public class Server {
                 break;
             } else if ("/register".equals(request[0])) {
                 // Client wants to register
-                if(registeredUsernames.contains(request[1])){
+                if (registeredUsernames.contains(request[1])) {
                     out.println("Error: Registration failed. Handle or alias already exists.");
                 } else {
                     out.println("Welcome " + request[1] + "!");
@@ -53,15 +54,29 @@ public class Server {
                 }
             } else if ("/dir".equals(request[0])) {
                 // Client wants to view directory contents
+
+                File folder = new File("./dir");
+                File[] listOfFiles = folder.listFiles();
+
+                StringBuilder fileListString = new StringBuilder("Server Directory\n");
+
+                for (int i = 0; i < listOfFiles.length; i++) {
+                    if (listOfFiles[i].isFile()) {
+                        fileListString.append(listOfFiles[i].getName()).append("\n");
+                    } else if (listOfFiles[i].isDirectory()) {
+                        fileListString.append("Directory ").append(listOfFiles[i].getName()).append("\n");
+                    }
+                }
                 
-                //TODO: output filenames of /Server folder
-                out.println("Error: Registration failed. Handle or alias already exists."); 
-                
-            } 
+                // TODO: output filenames of /Server folder
+                out.println(fileListString.toString());
+
+
+            }
         }
 
-        //in.close();
-        //out.close();
-        //clientSocket.close();
+        // in.close();
+        // out.close();
+        // clientSocket.close();
     }
 }
