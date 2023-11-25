@@ -1,25 +1,21 @@
 package Client;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.util.List;
 import java.util.Scanner;
 
 public class Client {
 
     private static Socket socket;
-    private static BufferedReader in;
-    private static PrintWriter out;
+    private static DataInputStream in;
+    private static DataOutputStream out;
     private static String username = "User";
 
     public static void main(String[] args) {
@@ -56,16 +52,16 @@ public class Client {
 
                     try { // Connect to server (valid: 127.0.0.1, 12345)
                         socket = new Socket(command[1], Integer.valueOf(command[2]));
-                        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                        out = new PrintWriter(socket.getOutputStream(), true);
+                        in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+                        out = new DataOutputStream(socket.getOutputStream());
 
                     } catch (Exception e) { // Incorrect IP and/or port number error
                         errorString = "Error: Connection to the Server has failed! Please check IP Address and Port Number.";
                         continue;
                     }
 
-                    out.println(userInput); // Send join command to server
-                    System.out.println(in.readLine()); // Receive response from server
+                    out.writeUTF(userInput); // Send join command to server (string)
+                    System.out.println(in.readUTF()); // Receive response from server
                     isConnected = true;
 
                 } else if ("/leave".equals(command[0])) { // Leave server
@@ -75,8 +71,8 @@ public class Client {
                     }
 
                     try {
-                        out.println(userInput); // Send leave command to server
-                        System.out.println(in.readLine()); // Receive response from server
+                        out.writeUTF(userInput); // Send leave command to server
+                        System.out.println(in.readUTF()); // Receive response from server
 
                         socket.close(); // Close connection
                     } catch (Exception e) {
@@ -102,16 +98,20 @@ public class Client {
                         errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO:
                                                                                                           // misleading
                                                                                                           // comment ->
-                                                                                                          // can i
+                                                                                                          // can a
                                                                                                           // client
                                                                                                           // register
                                                                                                           // twice?
+                                                                                                          // (after
+                                                                                                          // leaving
+                                                                                                          // then
+                                                                                                          // rejoining)
                         continue;
                     }
 
                     try {
-                        out.println(userInput); // Send register command to server
-                        System.out.println(in.readLine()); // Receive response from server
+                        out.writeUTF(userInput); // Send register command to server
+                        System.out.println(in.readUTF()); // Receive response from server
 
                         isRegistered = true;
                     } catch (Exception e) {
@@ -142,9 +142,9 @@ public class Client {
                     }
 
                     try {
-                        out.println(userInput); // Send dir command to server
-                        String[] dirString = in.readLine().split(","); // Receive response from server then split (file
-                                                                       // names are delimited by ',')
+                        out.writeUTF(userInput); // Send dir command to server
+                        String[] dirString = in.readUTF().split(","); // Receive response from server then split (file
+                                                                      // names are delimited by ',')
 
                         for (int i = 0; i < dirString.length; i++) {
                             System.out.println(dirString[i]); // Print file names
@@ -193,39 +193,19 @@ public class Client {
 
                     }
 
-                    out.println(userInput); // 1: Send "/store" command to server
+                    out.writeUTF(userInput); // 1: Send "/store" command to server
 
                     File sendFile = new File("./dir/" + command[1]);
+                    List<String> fileLines = Files.readAllLines(sendFile.toPath());
+                    String fileContent = String.join("\n", fileLines);
+                    System.out.println("- START -");
+                    out.writeUTF(fileContent);
+                    System.out.println("- END -");
 
-                    // Open output stream to write to the server
-                    OutputStream os = socket.getOutputStream();
-
-                    // Open input stream to read the file
-                    FileInputStream fis = new FileInputStream(sendFile);
-                    BufferedInputStream bis = new BufferedInputStream(fis);
-
-                    // Send contents to the server
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-                    while ((bytesRead = bis.read(buffer)) != -1) {
-                        os.write(buffer, 0, bytesRead);
-                    }
-
-                    // Send a specific marker to indicate the end of the file
-                    os.write("END_OF_FILE".getBytes());
-
-                    // Flush output stream (no autoflush)
-                    os.flush();
-
-                    // Close streams
-                    bis.close();
-                    fis.close();
-
-                    System.out.println("eof?");
 
                     // PrintWriter outToServer = new PrintWriter(socket.getOutputStream(), true);
                     // outToServer.print("EOF\n"); // Include newline character
-                    System.out.println(in.readLine()); // Receive server response
+                    System.out.println(in.readUTF()); // Receive server response
 
                 } else if ("/?".equals(command[0])) { // View command list
                     if (command.length == 1) {
