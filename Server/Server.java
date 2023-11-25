@@ -122,8 +122,8 @@ public class Server {
                         clientUsernameMap.get(clientSocket.getInetAddress()) +
                                 "<" + formattedTimestamp + ">: Uploaded " + fileName);
 
-            } else if ("/fetch".equals(request[0])) {
-                // Client wants to fetch files//byte buffer and shit
+            } else if ("/get".equals(request[0])) {
+                // Client wants to get files//byte buffer and shit
 
                 Boolean fileFound = false;
 
