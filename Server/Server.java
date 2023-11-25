@@ -5,6 +5,7 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -38,7 +39,7 @@ public class Server {
 
     private static void handleClient(Socket clientSocket) throws IOException {
 
-        File folder = new File("./dir");
+        File folder = new File("./dir/");
         File[] listOfFiles = folder.listFiles();
 
         DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
@@ -70,7 +71,7 @@ public class Server {
                     out.writeUTF("Welcome " + request[1] + "!");
 
                     // Register username to existing clientSocket within the HashMap
-                    clientUsernameMap.replace(clientSocket.getInetAddress(), request[1]); 
+                    clientUsernameMap.replace(clientSocket.getInetAddress(), request[1]);
 
                 }
             } else if ("/dir".equals(request[0])) { // Client wants to view directory contents
@@ -99,23 +100,16 @@ public class Server {
                 byte[] buffer = new byte[1024];
                 int bytesRead;
 
-                long totalBytes = in.readLong();
+                long totalBytes = in.readLong(); // Read file size from client
                 long totalBytesRead = 0;
 
                 while ((bytesRead = in.read(buffer)) != 0) {
                     bos.write(buffer, 0, bytesRead);
 
                     totalBytesRead += bytesRead;
-                    if(totalBytes == totalBytesRead) break;
+                    if (totalBytes == totalBytesRead)
+                        break;
                 }
-
-                // Check for the end-of-file marker
-                /*if ("END_OF_FILE".equals(in.readUTF())) {
-                    System.out.println("File transfer complete.");
-                } else {
-                    System.out.println("Error: Unexpected data received.");
-                }*/
-
                 // Close streams
                 bos.close();
                 fos.close();
@@ -131,28 +125,43 @@ public class Server {
             } else if ("/fetch".equals(request[0])) {
                 // Client wants to fetch files//byte buffer and shit
 
+                Boolean fileFound = false;
+
                 for (int i = 0; i < listOfFiles.length; i++) {
 
                     // Search for file by name
                     if (listOfFiles[i].getName().equals(request[1])) {
 
-                        out.writeUTF("Found!");
-
-                    } else {
-
-                        out.writeUTF("Error: File not found."); // Unsuccessful sending of a file that does not exist in
-                                                                // dir
-
+                        fileFound = true;
+                        break;
                     }
                 }
+
+                if (!fileFound) { // Check if file exists in client
+                    out.writeUTF("Error: File not found."); // Unsuccessful sending of a file that does not exist in dir
+                } else {
+
+                    out.writeBoolean(fileFound); // Send fileFound state
+
+                    File sendFile = new File("./dir/" + request[1]);
+                    FileInputStream fis = new FileInputStream(sendFile);
+                    BufferedInputStream bis = new BufferedInputStream(fis);
+
+                    long fileSize = sendFile.length(); // Get file size
+
+                    out.writeLong(fileSize); // Send file size
+
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = bis.read(buffer)) > 0) {
+                        out.write(buffer, 0, bytesRead); // Send file contents
+                    }
+
+                    // Close streams
+                    bis.close();
+                    fis.close();
+                }
             }
-
-            // out.println("Error: File not found in the server."); // Unsuccessful fetching
-            // of a file that does not exist in dir.
         }
-
-        // in.close();
-        // out.close();
-        // clientSocket.close();
     }
 }

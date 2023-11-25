@@ -1,14 +1,13 @@
 package Client;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.OutputStream;
+import java.io.FileOutputStream;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.util.List;
 import java.util.Scanner;
 
 public class Client {
@@ -180,7 +179,7 @@ public class Client {
                         // Search for file by name in client dir
                         if (listOfFiles[i].getName().equals(command[1])) {
 
-                            //System.out.println("Found!"); // debug
+                            // System.out.println("Found!"); // debug
 
                             fileFound = true; // Set fileFound state
                             break; // Break out of loop after finding file
@@ -200,9 +199,9 @@ public class Client {
                     BufferedInputStream bis = new BufferedInputStream(fis);
 
                     long fileSize = sendFile.length(); // Get file size
-                    
+
                     out.writeLong(fileSize); // Send file size
-                    
+
                     byte[] buffer = new byte[1024];
                     int bytesRead;
                     while ((bytesRead = bis.read(buffer)) > 0) {
@@ -214,12 +213,45 @@ public class Client {
                     fis.close();
 
                     System.out.println(in.readUTF()); // Receive server response
-                    
+
                 } else if ("/fetch".equals(command[0])) { // Fetch file from server
                     if (command.length != 2) { // Command must have only 2 arguments
                         errorString = "Error: Command parameters do not match or is not allowed.";
                         continue;
                     }
+
+                    out.writeUTF(userInput); // Send "/fetch" command to server
+                    
+                    if (!in.readBoolean()) { // Check if file name exists
+                        errorString = "Error: File not found in the server.";
+                        continue;
+                    }
+                    
+                    // Create a new file with the given fileName
+                    String fileName = command[1];
+                    File receivedFile = new File("./dir/" + fileName);
+                    FileOutputStream fos = new FileOutputStream(receivedFile);
+                    BufferedOutputStream bos = new BufferedOutputStream(fos);
+
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    
+                    long totalBytes = in.readLong(); // Receive file size from server
+                    long totalBytesRead = 0;
+                    
+                    while ((bytesRead = in.read(buffer)) != 0) { // Write to new file
+                        bos.write(buffer, 0, bytesRead);
+                        
+                        totalBytesRead += bytesRead;
+                        if (totalBytes == totalBytesRead) 
+                        break;
+                    }
+                    // Close streams
+                    bos.close();
+                    fos.close();
+                    
+                    System.out.println("File received from Server: " + fileName);
+                    
                 } else if ("/?".equals(command[0])) { // View commands
                     if (command.length == 1) {
                         System.out.println("Available commands:");
