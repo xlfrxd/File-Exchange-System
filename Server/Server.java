@@ -16,7 +16,7 @@ import java.net.Socket;
 import java.util.HashMap;
 
 public class Server {
-    private static HashMap<InetAddress, String> clientUsernameMap = new HashMap<InetAddress, String>();
+    private static HashMap<String, String> clientUsernameMap = new HashMap<String, String>();
 
     public static void main(String[] args) throws IOException {
         InetAddress serverAddress = InetAddress.getByName("127.0.0.1");
@@ -38,6 +38,7 @@ public class Server {
     }
 
     private static void handleClient(Socket clientSocket) throws IOException {
+        String clientId = "";
 
         File folder = new File("./dir/");
         File[] listOfFiles = folder.listFiles();
@@ -56,11 +57,12 @@ public class Server {
             if ("/join".equals(request[0])) { // Client joined
                 out.writeUTF("Connection to the File Exchange Server is successful!");
 
-                clientUsernameMap.put(clientSocket.getInetAddress(), ""); // Add clientSocket to HashMap
+                clientId = clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort();
+                clientUsernameMap.put(clientId, ""); // Add clientSocket to HashMap
             } else if ("/leave".equals(request[0])) {
                 // Client wants to leave
                 out.writeUTF("You are disconnected. Goodbye!");
-                clientUsernameMap.remove(clientSocket.getInetAddress()); // Remove clientSocket from HashMap
+                clientUsernameMap.remove(clientId); // Remove clientSocket from HashMap
                 clientSocket.close(); // Close client's socket
                 break; // Stop reading client input
             } else if ("/register".equals(request[0])) { // Client wants to register
@@ -71,7 +73,7 @@ public class Server {
                     out.writeUTF("Welcome " + request[1] + "!");
 
                     // Register username to existing clientSocket within the HashMap
-                    clientUsernameMap.replace(clientSocket.getInetAddress(), request[1]);
+                    clientUsernameMap.replace(clientId, request[1]);
 
                 }
             } else if ("/dir".equals(request[0])) { // Client wants to view directory contents
@@ -117,15 +119,17 @@ public class Server {
                 // Get current timestamp
                 LocalDateTime timestamp = LocalDateTime.now();
                 String formattedTimestamp = timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
+                
                 out.writeUTF(
-                        clientUsernameMap.get(clientSocket.getInetAddress()) +
+                        clientUsernameMap.get(clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort()) +
                                 "<" + formattedTimestamp + ">: Uploaded " + fileName);
 
             } else if ("/get".equals(request[0])) {
                 // Client wants to get files//byte buffer and shit
 
                 Boolean fileFound = false;
+                listOfFiles = folder.listFiles(); // Get updated list of files when /get is called
+
 
                 for (int i = 0; i < listOfFiles.length; i++) {
 

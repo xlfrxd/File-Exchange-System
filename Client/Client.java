@@ -126,17 +126,9 @@ public class Client {
                     }
 
                     if (!isConnected || !isRegistered) {
-                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO:
-                                                                                                          // misleading
-                                                                                                          // comment,
-                                                                                                          // must be
-                                                                                                          // connected
-                                                                                                          // to server
-                                                                                                          // and
-                                                                                                          // registered
-                                                                                                          // to view
-                                                                                                          // directory
-                                                                                                          // files
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; 
+                        // TODO: misleading comment, must be connected to server and registered
+                        // to view directory files
                         continue;
                     }
 
@@ -172,7 +164,15 @@ public class Client {
                         continue;
                     }
 
+                    if (!isConnected || !isRegistered) {
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; 
+                        // TODO: misleading comment, must be connected to server and registered
+                        // to view directory files
+                        continue;
+                    }
+
                     Boolean fileFound = false;
+                    listOfFiles = folder.listFiles(); // Get updated list of files when /store is called
 
                     for (int i = 0; i < listOfFiles.length; i++) {
 
@@ -217,6 +217,13 @@ public class Client {
                 } else if ("/get".equals(command[0])) { // Get file from server
                     if (command.length != 2) { // Command must have only 2 arguments
                         errorString = "Error: Command parameters do not match or is not allowed.";
+                        continue;
+                    }
+
+                    if (!isConnected || !isRegistered) {
+                        errorString = "Error: Disconnection failed. Please connect to the server first."; 
+                        // TODO: misleading comment, must be connected to server and registered
+                        // to view directory files
                         continue;
                     }
 
@@ -268,6 +275,7 @@ public class Client {
                     }
                 } else { // Unknown or wrong syntax error
                     errorString = "Error: Command not found.";
+                    continue;
                 }
 
                 // Refresh inputs and error strings
