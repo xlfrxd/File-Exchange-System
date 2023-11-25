@@ -214,6 +214,13 @@ public class Client {
                     fis.close();
 
                     System.out.println(in.readUTF()); // Receive server response
+                    
+                } else if ("/fetch".equals(command[0])) { // Fetch file from server
+                    if (command.length != 2) { // Command must have only 2 arguments
+                        errorString = "Error: Command parameters do not match or is not allowed.";
+                        continue;
+                    }
+                } else if ("/?".equals(command[0])) { // View commands
                     if (command.length == 1) {
                         System.out.println("Available commands:");
 
