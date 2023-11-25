@@ -196,18 +196,24 @@ public class Client {
                     out.writeUTF(userInput); // 1: Send "/store" command to server
 
                     File sendFile = new File("./dir/" + command[1]);
-                    List<String> fileLines = Files.readAllLines(sendFile.toPath());
-                    String fileContent = String.join("\n", fileLines);
-                    System.out.println("- START -");
-                    out.writeUTF(fileContent);
-                    System.out.println("- END -");
+                    FileInputStream fis = new FileInputStream(sendFile);
+                    BufferedInputStream bis = new BufferedInputStream(fis);
 
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
 
-                    // PrintWriter outToServer = new PrintWriter(socket.getOutputStream(), true);
-                    // outToServer.print("EOF\n"); // Include newline character
+                    while ((bytesRead = bis.read(buffer)) > 0) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+
+                    // Close streams
+                    bis.close();
+                    fis.close();
+
+                    // Send a marker or command indicating the end of file transfer
+                    out.writeUTF("END_OF_FILE");
+
                     System.out.println(in.readUTF()); // Receive server response
-
-                } else if ("/?".equals(command[0])) { // View command list
                     if (command.length == 1) {
                         System.out.println("Available commands:");
 

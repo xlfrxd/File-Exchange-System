@@ -27,7 +27,13 @@ public class Server {
 
         while (!serverSocket.isClosed()) {
             Socket clientSocket = serverSocket.accept();
-            handleClient(clientSocket);
+            new Thread(() -> {
+                try {
+                    handleClient(clientSocket);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
         }
 
         serverSocket.close();
@@ -91,27 +97,33 @@ public class Server {
                 // Create a new file with the given fileName
                 File receivedFile = new File("./dir/" + fileName);
                 FileOutputStream fos = new FileOutputStream(receivedFile);
-                BufferedOutputStream bos = new BufferedOutputStream(fos); // Writes to newly created file
+                BufferedOutputStream bos = new BufferedOutputStream(fos);
 
-                bos.write(in.readUTF().getBytes()); // Only works for .txt files
+                byte[] buffer = new byte[1024];
+                int bytesRead;
 
-                // TODO: Find solution for .JPG, .mp4, etc.
+                while ((bytesRead = in.read(buffer)) > 0) {
+                    bos.write(buffer, 0, bytesRead);
+                }
+
+                // Check for the end-of-file marker
+                if ("END_OF_FILE".equals(in.readUTF())) {
+                    System.out.println("File transfer complete.");
+                } else {
+                    System.out.println("Error: Unexpected data received.");
+                }
 
                 // Close streams
                 bos.close();
                 fos.close();
-
-                // Optional: Receive and print an "EOF" marker from the client
-                // String eofMarker = in.readLine();
-                // System.out.println("Received: EOF");
 
                 // Get current timestamp
                 LocalDateTime timestamp = LocalDateTime.now();
                 String formattedTimestamp = timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
                 out.writeUTF(
-                    clientUsernameMap.get(clientSocket.getInetAddress()) + 
-                    "<" + formattedTimestamp + ">: Uploaded " + fileName); 
+                        clientUsernameMap.get(clientSocket.getInetAddress()) +
+                                "<" + formattedTimestamp + ">: Uploaded " + fileName);
 
             } else if ("/fetch".equals(request[0])) {
                 // Client wants to fetch files//byte buffer and shit
