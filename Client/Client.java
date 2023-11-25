@@ -180,7 +180,7 @@ public class Client {
                         // Search for file by name in client dir
                         if (listOfFiles[i].getName().equals(command[1])) {
 
-                            System.out.println("Found!"); // debug
+                            //System.out.println("Found!"); // debug
 
                             fileFound = true; // Set fileFound state
                             break; // Break out of loop after finding file
@@ -193,25 +193,25 @@ public class Client {
 
                     }
 
-                    out.writeUTF(userInput); // 1: Send "/store" command to server
+                    out.writeUTF(userInput); // Send "/store" command to server
 
                     File sendFile = new File("./dir/" + command[1]);
                     FileInputStream fis = new FileInputStream(sendFile);
                     BufferedInputStream bis = new BufferedInputStream(fis);
 
+                    long fileSize = sendFile.length(); // Get file size
+                    
+                    out.writeLong(fileSize); // Send file size
+                    
                     byte[] buffer = new byte[1024];
                     int bytesRead;
-
                     while ((bytesRead = bis.read(buffer)) > 0) {
-                        out.write(buffer, 0, bytesRead);
+                        out.write(buffer, 0, bytesRead); // Send file contents
                     }
 
                     // Close streams
                     bis.close();
                     fis.close();
-
-                    // Send a marker or command indicating the end of file transfer
-                    out.writeUTF("END_OF_FILE");
 
                     System.out.println(in.readUTF()); // Receive server response
                     if (command.length == 1) {
@@ -230,6 +230,11 @@ public class Client {
                 } else { // Unknown or wrong syntax error
                     errorString = "Error: Command not found.";
                 }
+
+                // Refresh inputs and error strings
+                userInput = "";
+                errorString = "";
+                command = new String[0];
             } while (true);
 
         } catch (Exception e) {

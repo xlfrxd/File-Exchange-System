@@ -12,12 +12,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashSet;
 import java.util.HashMap;
-import java.util.Set;
 
 public class Server {
-    private static Set<String> registeredUsernames = new HashSet<>();
     private static HashMap<InetAddress, String> clientUsernameMap = new HashMap<InetAddress, String>();
 
     public static void main(String[] args) throws IOException {
@@ -71,9 +68,9 @@ public class Server {
                     out.writeUTF("Error: Registration failed. Handle or alias already exists.");
                 } else {
                     out.writeUTF("Welcome " + request[1] + "!");
-                    clientUsernameMap.replace(clientSocket.getInetAddress(), request[1]); // Register username to
-                                                                                          // existing clientSocket
-                                                                                          // within the HashMap
+
+                    // Register username to existing clientSocket within the HashMap
+                    clientUsernameMap.replace(clientSocket.getInetAddress(), request[1]); 
 
                 }
             } else if ("/dir".equals(request[0])) { // Client wants to view directory contents
@@ -102,16 +99,22 @@ public class Server {
                 byte[] buffer = new byte[1024];
                 int bytesRead;
 
-                while ((bytesRead = in.read(buffer)) > 0) {
+                long totalBytes = in.readLong();
+                long totalBytesRead = 0;
+
+                while ((bytesRead = in.read(buffer)) != 0) {
                     bos.write(buffer, 0, bytesRead);
+
+                    totalBytesRead += bytesRead;
+                    if(totalBytes == totalBytesRead) break;
                 }
 
                 // Check for the end-of-file marker
-                if ("END_OF_FILE".equals(in.readUTF())) {
+                /*if ("END_OF_FILE".equals(in.readUTF())) {
                     System.out.println("File transfer complete.");
                 } else {
                     System.out.println("Error: Unexpected data received.");
-                }
+                }*/
 
                 // Close streams
                 bos.close();
