@@ -17,6 +17,28 @@ public class Client {
     private static DataOutputStream out;
     private static String username = "User";
 
+    private static class BroadcastListener extends Thread {
+        private DataInputStream in;
+    
+        public BroadcastListener(DataInputStream in) {
+            this.in = in;
+        }
+    
+        @Override
+        public void run() {
+            while(true){
+
+                try {
+                    if (in.readUTF()=="/bc") { // Receives bc command
+                        System.out.println(in.readUTF()); // Receives second response (message contents)
+                    }
+                } catch (Exception e) {
+                    
+                }
+            }
+        }
+    }
+
     public static void main(String[] args) {
         String userInput = "";
         String errorString = "";
@@ -28,8 +50,14 @@ public class Client {
         File[] listOfFiles = folder.listFiles();
 
         Scanner scan = new Scanner(System.in);
+
+        // Listen for Broadcast Messages from server
+        new BroadcastListener(in).start();
+
         try {
             do {
+
+
                 // Print errors
                 if (!(errorString.isEmpty())) {
                     System.out.println(errorString);
@@ -93,28 +121,19 @@ public class Client {
                         continue;
                     }
 
-                    if (isRegistered) { // Client is already registered
-                        errorString = "Error: Disconnection failed. Please connect to the server first."; // TODO:
-                                                                                                          // misleading
-                                                                                                          // comment ->
-                                                                                                          // can a
-                                                                                                          // client
-                                                                                                          // register
-                                                                                                          // twice?
-                                                                                                          // (after
-                                                                                                          // leaving
-                                                                                                          // then
-                                                                                                          // rejoining)
-                        continue;
-                    }
+                    
 
                     try {
                         out.writeUTF(userInput); // Send register command to server
-                        System.out.println(in.readUTF()); // Receive response from server
+                        if(in.readBoolean()){ // Receive validity response from server
+                            System.out.println("Welcome " + command[1]);
+                            isRegistered = true;
+                        } else {
+                            System.out.println("Error: Registration failed. Handle or alias already exists."); 
+                        } 
 
-                        isRegistered = true;
                     } catch (Exception e) {
-                        System.out.println("Error: Registration failed. Handle or alias already exists. /c");
+                        System.out.println("Error: Registration failed. Handle or alias already exists."); // TODO: misleading comment (happens when connection closes)
                         continue;
                     }
 
@@ -270,9 +289,29 @@ public class Client {
                         System.out.println("          /store <filename>: Send a file to the server.");
                         System.out.println("          /dir: Request the directory file list from the server.");
                         System.out.println("          /get <filename>: Fetch a file from the server.");
+                        System.out.println("          /bc <message>: Send a message to everyone on the server.");
+                        System.out.println("          /msg <username> <message>: Send a message to a user on the server.");
                     } else {
                         errorString = "Error: Command parameters do not match or are not allowed.";
                     }
+                } else if ("/bc".equals(command[0])) { // Broadcast a message to everyone in the server (registered, joined)
+
+                    if(!isRegistered || !isConnected) {
+                        System.out.println("Error: Must be connected and registered to a server"); // TODO: Since this is a BONUS, this doesn't have to be exact.
+                        continue;
+                    }
+
+                    out.writeUTF(command[0]);
+
+                    StringBuilder message = new StringBuilder();
+                    for(int i = 1; i < command.length; i++){ // Skip "/bc"
+                        message.append(command[i] + " ");
+                    }
+
+                    out.writeUTF(message.toString());
+                    
+                } else if ("/msg".equals(command[0])) { // Message a specific user in the server
+                    
                 } else { // Unknown or wrong syntax error
                     errorString = "Error: Command not found.";
                     continue;

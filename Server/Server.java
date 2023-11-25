@@ -13,14 +13,16 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.spec.ECFieldF2m;
 import java.util.HashMap;
 
 public class Server {
     private static HashMap<String, String> clientUsernameMap = new HashMap<String, String>();
-
+    private static InetAddress serverAddress;
+    private static int port;
     public static void main(String[] args) throws IOException {
-        InetAddress serverAddress = InetAddress.getByName("127.0.0.1");
-        int port = 12345;
+        serverAddress = InetAddress.getByName("127.0.0.1");
+        port = 12345;
         ServerSocket serverSocket = new ServerSocket(port, 50, serverAddress);
 
         while (!serverSocket.isClosed()) {
@@ -67,15 +69,18 @@ public class Server {
                 break; // Stop reading client input
             } else if ("/register".equals(request[0])) { // Client wants to register
                 System.out.println(request[1]);
-                if (clientUsernameMap.containsValue(request[1])) {
-                    out.writeUTF("Error: Registration failed. Handle or alias already exists.");
-                } else {
-                    out.writeUTF("Welcome " + request[1] + "!");
 
+                Boolean isValid = false;
+                if (!clientUsernameMap.containsValue(request[1])) {
+                    isValid = true;
+                } 
+
+                out.writeBoolean(isValid);
+
+                if(isValid)
                     // Register username to existing clientSocket within the HashMap
                     clientUsernameMap.replace(clientId, request[1]);
 
-                }
             } else if ("/dir".equals(request[0])) { // Client wants to view directory contents
                 StringBuilder fileListString = new StringBuilder("Server Directory,"); // TODO: issue with \n
 
@@ -164,6 +169,20 @@ public class Server {
                     // Close streams
                     bis.close();
                     fis.close();
+                }
+            } else if ("/bc".equals(request[0])) { // Broadcast message to everyone in the server
+                // Get client who broadcasted
+                String broadcasterUsername = clientUsernameMap.get(clientSocket.getInetAddress());
+
+                
+                // Send message to everyone else in the HashMap EXCEPT broadcaster
+                for (String otherClient : clientUsernameMap.keySet()) {
+                    
+                    Socket otherClientSocket = new Socket(serverAddress, port);
+                    DataOutputStream dos = new DataOutputStream(otherClientSocket.getOutputStream());
+                    dos.writeUTF("/bc");
+                    dos.writeUTF("[Broadcast from "+broadcasterUsername+"]:"+in.readUTF());
+                    otherClientSocket.close();
                 }
             }
         }
